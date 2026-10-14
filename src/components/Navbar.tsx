@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const categories = [
   { name: "চাল", slug: "chal", emoji: "🍚" },
@@ -28,6 +29,9 @@ const tickerItems = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const { data: session, isPending } = useSession();
 
   const banglaDate = new Intl.DateTimeFormat("bn-BD", {
     day: "numeric",
@@ -35,10 +39,19 @@ export default function Navbar() {
     year: "numeric",
   }).format(new Date());
 
+  async function handleSignOut() {
+    try {
+      await signOut();
+      router.replace("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-green-100 bg-white text-gray-800">
       <div className="mx-auto max-w-6xl px-4">
-        {/* Top Row */}
         <div className="flex min-h-20 items-center justify-between gap-3">
           <Link href="/" className="flex shrink-0 items-center gap-2">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-700 p-1">
@@ -63,27 +76,48 @@ export default function Navbar() {
           </Link>
 
           <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href="/signin"
-              className="rounded-lg border border-green-700 px-3 py-2 text-xs font-semibold text-green-800 hover:bg-green-50 sm:px-4 sm:text-sm"
-            >
-              সাইন ইন
-            </Link>
+            {isPending ? (
+              <span className="text-xs text-gray-500 sm:text-sm">
+                অপেক্ষা করো...
+              </span>
+            ) : session ? (
+              <>
+                <span className="hidden max-w-32 truncate text-sm font-medium text-green-800 sm:inline">
+                  {session.user.name}
+                </span>
 
-            <Link
-              href="/signup"
-              className="rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-800 sm:px-4 sm:text-sm"
-            >
-              সাইন আপ
-            </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="rounded-lg border border-red-600 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 sm:px-4 sm:text-sm"
+                >
+                  সাইন আউট
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/signin"
+                  className="rounded-lg border border-green-700 px-3 py-2 text-xs font-semibold text-green-800 hover:bg-green-50 sm:px-4 sm:text-sm"
+                >
+                  সাইন ইন
+                </Link>
+
+                <Link
+                  href="/signup"
+                  className="rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-800 sm:px-4 sm:text-sm"
+                >
+                  সাইন আপ
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Categories: Left Side Only */}
         <div className="border-t border-gray-100 py-2">
           <nav
             aria-label="পণ্যের ক্যাটাগরি"
-            className="grid w-full max-w-162.5 grid-cols-8 gap-1"
+            className="grid w-fit max-w-full grid-cols-8 gap-0"
           >
             {categories.map((category) => {
               const href = `/category/${category.slug}`;
@@ -94,13 +128,16 @@ export default function Navbar() {
                   key={category.slug}
                   href={href}
                   title={category.name}
-                  className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-0.5 py-2 text-center transition sm:flex-row sm:gap-1 sm:px-1 ${
+                  className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-0 py-2 text-center transition sm:flex-row sm:gap-1 sm:px-0.5 ${
                     active
                       ? "bg-green-100 text-green-800"
                       : "text-gray-600 hover:bg-green-50 hover:text-green-800"
                   }`}
                 >
-                  <span className="text-sm sm:text-base" aria-hidden="true">
+                  <span
+                    className="text-sm sm:text-base"
+                    aria-hidden="true"
+                  >
                     {category.emoji}
                   </span>
 
@@ -114,7 +151,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Price Ticker */}
       <div className="overflow-hidden border-t border-green-100 bg-green-50 py-2">
         <div className="animate-marquee flex w-max items-center">
           {[...tickerItems, ...tickerItems].map((item, index) => (

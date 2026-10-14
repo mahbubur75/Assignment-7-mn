@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 
 const API_URL =
   "https://openapi.programming-hero.com/api/bazardor/products";
@@ -35,8 +37,12 @@ type Product = {
 };
 
 function ProductCard({ product }: { product: Product }) {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
+
   const today = Number(product.today ?? 0);
   const yesterday = Number(product.yesterday ?? 0);
+
   const direction =
     product.change?.dir ||
     (today > yesterday
@@ -49,21 +55,43 @@ function ProductCard({ product }: { product: Product }) {
   const image = product.image || "🛒";
   const isImageUrl = /^https?:\/\//i.test(image);
 
+  const productPath = `/product/${product.id}`;
+
+  function handleProductClick(
+    event: React.MouseEvent<HTMLAnchorElement>
+  ) {
+    // Session check শেষ না হওয়া পর্যন্ত এগোবে না
+    if (isPending) {
+      event.preventDefault();
+      return;
+    }
+
+    // লগইন না থাকলে Sign Up পেজে পাঠাবে
+    if (!session) {
+      event.preventDefault();
+      router.push("/signup");
+    }
+
+    // লগইন থাকলে Link স্বাভাবিকভাবে Details পেজে যাবে
+  }
+
   return (
     <Link
-      href={`/product/${product.slug || product.id}`}
+      href={productPath}
+      onClick={handleProductClick}
+      aria-disabled={isPending}
       className="block rounded-xl border border-green-100 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
     >
       <div className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded-lg bg-green-50">
         {isImageUrl ? (
           <Image
-  src={image}
-  alt={product.nameBn || "পণ্য"}
-  width={300}
-  height={200}
-  unoptimized
-  className="h-full w-full object-contain"
-/>
+            src={image}
+            alt={product.nameBn || "পণ্য"}
+            width={300}
+            height={200}
+            unoptimized
+            className="h-full w-full object-contain"
+          />
         ) : (
           <span className="text-5xl">{image}</span>
         )}
@@ -194,6 +222,7 @@ export default function Products() {
     return (
       <section className="mx-auto max-w-6xl px-4 py-12 text-center">
         <p className="mb-4 text-red-600">{error}</p>
+
         <button
           onClick={() => setRetry((value) => value + 1)}
           className="rounded-lg bg-green-700 px-5 py-2 text-white"
@@ -216,7 +245,10 @@ export default function Products() {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3">
         {items.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+          />
         ))}
       </div>
     );

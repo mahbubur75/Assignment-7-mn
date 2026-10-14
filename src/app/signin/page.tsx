@@ -1,62 +1,159 @@
-import React from "react";
+"use client";
 
-const SignINPage = () => {
-return (
-<div className="min-h-screen bg-[#f7faf7] px-4 pt-12">
-<div className="mx-auto flex w-full max-w-md flex-col items-center">
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "@/lib/auth-client";
 
-    {/* Sign In Heading */}
-    <h2 className="mb-3 text-center text-3xl font-bold text-green-700">
-      সাইন ইন
-    </h2>
+export default function SigninPage() {
+  const router = useRouter();
 
-    {/* Description */}
-    <p className="mb-8 text-center text-sm text-gray-500">
-      বিস্তারিত দাম, বাজার তুলনা ও প্রোফাইল দেখতে অ্যাকাউন্টে প্রবেশ করুন।
-    </p>
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    {/* Sign In Card */}
-    <form className="w-full">
-      <fieldset className="fieldset w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+  async function handleSignin(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+    setError("");
 
-        <label className="label mb-1 text-gray-700">
-          ইমেইল
-        </label>
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
-        <input
-          type="email"
-          name="email"
-          className="input w-full rounded-xl border-gray-300 bg-white"
-          placeholder="you@example.com"
-          required
-        />
+    const email = String(
+      formData.get("email") ?? ""
+    ).trim();
 
-        <label className="label mb-1 mt-3 text-gray-700">
-          পাসওয়ার্ড
-        </label>
+    const password = String(
+      formData.get("password") ?? ""
+    );
 
-        <input
-          type="password"
-          name="password"
-          className="input w-full rounded-xl border-gray-300 bg-white"
-          placeholder="কমপক্ষে ৮ অক্ষর"
-          required
-        />
+    if (!email) {
+      setError("ইমেইল লিখো।");
+      return;
+    }
 
-        <button
-          type="submit"
-          className="btn mt-5 w-full rounded-xl border-0 bg-green-700 text-white hover:bg-green-800"
-        >
-          সাইন ইন
-        </button>
+    if (!password) {
+      setError("পাসওয়ার্ড লিখো।");
+      return;
+    }
 
-      </fieldset>
-    </form>
+    try {
+      setLoading(true);
 
-  </div>
-</div>
+      const result = await signIn.email({
+        email,
+        password,
+      });
 
-);
-};
+      if (result.error) {
+        setError(
+          result.error.message ||
+            "ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।"
+        );
+        return;
+      }
 
-export default SignINPage;
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError(
+        "সাইন ইন করা যায়নি। আবার চেষ্টা করো।"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-base-200 px-4 py-10">
+      <form
+        onSubmit={handleSignin}
+        className="card w-full max-w-md bg-base-100 shadow-xl"
+      >
+        <div className="card-body gap-4">
+          <Link
+            href="/"
+            className="link link-success text-sm no-underline"
+          >
+            ← হোম পেজে ফিরে যাও
+          </Link>
+
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-success">
+              সাইন ইন
+            </h1>
+
+            <p className="mt-2 text-base-content/70">
+              Bazar Dor-এ প্রবেশ করতে সাইন ইন করো
+            </p>
+          </div>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">
+              ইমেইল
+            </legend>
+
+            <input
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              placeholder="তোমার ইমেইল লিখো"
+              className="input input-bordered w-full"
+            />
+          </fieldset>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">
+              পাসওয়ার্ড
+            </legend>
+
+            <input
+              type="password"
+              name="password"
+              required
+              autoComplete="current-password"
+              placeholder="তোমার পাসওয়ার্ড লিখো"
+              className="input input-bordered w-full"
+            />
+          </fieldset>
+
+          {error && (
+            <div
+              role="alert"
+              className="alert alert-error"
+            >
+              <span>{error}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-success mt-2 w-full text-white"
+          >
+            {loading ? (
+              <>
+                <span className="loading loading-spinner loading-sm" />
+                অপেক্ষা করো...
+              </>
+            ) : (
+              "সাইন ইন"
+            )}
+          </button>
+
+          <p className="text-center text-sm">
+            অ্যাকাউন্ট নেই?{" "}
+            <Link
+              href="/signup"
+              className="link link-success font-semibold"
+            >
+              সাইন আপ করো
+            </Link>
+          </p>
+        </div>
+      </form>
+    </main>
+  );
+}
