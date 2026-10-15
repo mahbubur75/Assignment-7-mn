@@ -12,7 +12,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
 
   async function handleSignup(
-    e: React.FormEvent<HTMLFormElement>
+    e: React.SubmitEvent<HTMLFormElement>
   ) {
     e.preventDefault();
     setError("");
