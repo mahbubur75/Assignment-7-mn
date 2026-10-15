@@ -1,25 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signUp } from "@/lib/auth-client";
+import { signUp, signIn } from "@/lib/auth-client";
 
 export default function SignupPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSignup(
-    e: React.SubmitEvent<HTMLFormElement>
-  ) {
+  async function handleSignup(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
-    const formData = new FormData(
-      e.currentTarget as HTMLFormElement
-    );
+    const formData = new FormData(e.currentTarget);
 
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
@@ -50,9 +47,7 @@ export default function SignupPage() {
       });
 
       if (result.error) {
-        setError(
-          result.error.message || "সাইন আপ করা যায়নি।"
-        );
+        setError(result.error.message || "সাইন আপ করা যায়নি।");
         return;
       }
 
@@ -61,6 +56,28 @@ export default function SignupPage() {
       setError("সাইন আপ করতে সমস্যা হয়েছে। আবার চেষ্টা করো।");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSocialLogin(provider: "google" | "github") {
+    setError("");
+    setSocialLoading(provider);
+
+    try {
+      const result = await signIn.social({
+        provider,
+        callbackURL: "/",
+      });
+
+      if (result.error) {
+        setError(
+          result.error.message || "সোশ্যাল লগইন করা যায়নি।"
+        );
+        setSocialLoading("");
+      }
+    } catch {
+      setError("লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করো।");
+      setSocialLoading("");
     }
   }
 
@@ -130,7 +147,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !!socialLoading}
             className="btn btn-success mt-2 w-full text-white"
           >
             {loading ? (
@@ -141,6 +158,36 @@ export default function SignupPage() {
             ) : (
               "সাইন আপ"
             )}
+          </button>
+
+          <div className="divider">অথবা</div>
+
+          <button
+            type="button"
+            disabled={loading || !!socialLoading}
+            onClick={() => handleSocialLogin("google")}
+            className="btn btn-outline w-full"
+          >
+            {socialLoading === "google" ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <span className="font-bold text-lg">G</span>
+            )}
+            Google দিয়ে চালিয়ে যাও
+          </button>
+
+          <button
+            type="button"
+            disabled={loading || !!socialLoading}
+            onClick={() => handleSocialLogin("github")}
+            className="btn btn-outline w-full"
+          >
+            {socialLoading === "github" ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <span className="font-bold text-lg">GH</span>
+            )}
+            GitHub দিয়ে চালিয়ে যাও
           </button>
 
           <p className="text-center text-sm">

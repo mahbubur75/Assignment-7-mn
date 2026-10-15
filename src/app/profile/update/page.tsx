@@ -174,7 +174,7 @@ function ProfileForm({
       <div className="mx-auto w-full max-w-xl">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-extrabold text-green-900">
-            Update Information
+            আমার প্রোফাইল
           </h1>
 
           <p className="mt-2 text-sm text-gray-600">
