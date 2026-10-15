@@ -84,10 +84,10 @@ export default function Navbar() {
               <>
                 <Link
   href="/profile/update"
-  className="hidden max-w-32 truncate text-sm font-medium text-green-800 hover:text-green-900 sm:inline"
-  title="Update Information"
+  className="max-w-24 truncate text-xs font-semibold text-green-800 hover:text-green-900 sm:max-w-32 sm:text-sm"
+  title={session.user.name || "প্রোফাইল"}
 >
-  {session.user.name}
+  {session.user.name || "প্রোফাইল"}
 </Link>
 
                 <button
