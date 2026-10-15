@@ -82,9 +82,13 @@ export default function Navbar() {
               </span>
             ) : session ? (
               <>
-                <span className="hidden max-w-32 truncate text-sm font-medium text-green-800 sm:inline">
-                  {session.user.name}
-                </span>
+                <Link
+  href="/profile/update"
+  className="hidden max-w-32 truncate text-sm font-medium text-green-800 hover:text-green-900 sm:inline"
+  title="Update Information"
+>
+  {session.user.name}
+</Link>
 
                 <button
                   type="button"
